@@ -241,6 +241,23 @@ npm run dev
 npm run typecheck
 ```
 
+## Bundled Skills
+
+This plugin includes OpenClaw skills for common Forge workflows:
+
+| Skill | Description |
+|-------|-------------|
+| [forge-issue-triager](./skills/forge-issue-triager/) | Auto-triage incoming issues |
+| [forge-code-reviewer](./skills/forge-code-reviewer/) | Review pull requests |
+| [forge-pr-summarizer](./skills/forge-pr-summarizer/) | Generate PR summaries |
+
+Install skills by copying to your OpenClaw skills directory:
+```bash
+cp -r node_modules/@kernelius/openclaw-plugin/skills/forge-issue-triager ~/.openclaw/skills/
+```
+
+See [skills/README.md](./skills/README.md) for details.
+
 ## Links
 
 - [Kernelius Forge](https://forge.kernelius.com)
