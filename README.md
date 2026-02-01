@@ -153,6 +153,36 @@ Example:
 }
 ```
 
+## Actions
+
+### Send Message
+Send a comment to an issue or PR:
+```javascript
+{
+  action: "send",
+  to: "repo:owner/name:issue:42",
+  message: "Your comment text"
+}
+```
+
+### React
+Add an emoji reaction to issues, PRs, or comments:
+```javascript
+{
+  action: "react",
+  messageId: "issue_comment:abc123",  // or issue:, pr:, pr_comment:
+  emoji: "+1"  // Valid: +1, -1, laugh, hooray, confused, heart, rocket, eyes
+}
+```
+
+**messageId formats:**
+- `issue:<id>` - React to an issue
+- `pr:<id>` - React to a pull request
+- `issue_comment:<id>` - React to an issue comment
+- `pr_comment:<id>` - React to a PR comment
+
+Inbound webhook messages include `messageId` automatically, allowing agents to react to incoming comments.
+
 ## Webhook Events
 
 The plugin handles these Forge webhook events:
@@ -168,6 +198,7 @@ The plugin handles these Forge webhook events:
 | `pr.updated` | PR title/body changed |
 | `pr.merged` | Pull request merged |
 | `pr.closed` | PR closed without merging |
+| `pr.reopened` | PR reopened |
 | `pr.review_requested` | Review requested on PR |
 | `pr.reviewed` | Review submitted |
 | `pr.commented` | Comment on PR |
