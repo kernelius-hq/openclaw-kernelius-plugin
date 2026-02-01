@@ -45,7 +45,7 @@ export function forgePayloadToInbound(
   let conversationId: string;
   let body: string;
   let messageId: string | undefined;
-  let chatType: "direct" | "group" = "channel";
+  let chatType: "direct" | "group" = "group"; // Issues/PRs are group conversations
 
   if (issue) {
     conversationId = `repo:${repository.fullName}:issue:${issue.number}`;

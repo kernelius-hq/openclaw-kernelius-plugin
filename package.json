@@ -1,6 +1,6 @@
 {
   "name": "@kernelius/openclaw-plugin",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "OpenClaw channel plugin for Kernelius Forge - enables agents to work with repositories, issues, and pull requests",
   "type": "module",
   "main": "./dist/index.js",

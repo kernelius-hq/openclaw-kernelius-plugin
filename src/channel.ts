@@ -128,7 +128,7 @@ export const kerneliusPlugin: ChannelPlugin = {
         throw new Error(`Failed to send message to Kernelius: ${response.status} ${error}`);
       }
 
-      const result = await response.json();
+      const result = await response.json() as { id: string; createdAt: string };
 
       return {
         messageId: result.id,
