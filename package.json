@@ -1,0 +1,54 @@
+{
+  "name": "@kernelius/openclaw-plugin",
+  "version": "0.1.0",
+  "description": "OpenClaw channel plugin for Kernelius Forge - enables agents to work with repositories, issues, and pull requests",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "openclaw",
+    "kernelius",
+    "forge",
+    "git",
+    "agent",
+    "ai",
+    "channel-plugin"
+  ],
+  "author": "Kernelius",
+  "license": "MIT",
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "openclaw": {
+    "extensions": ["./dist/index.js"]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kernelius-hq/openclaw-kernelius-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kernelius-hq/openclaw-kernelius-plugin/issues"
+  },
+  "homepage": "https://github.com/kernelius-hq/openclaw-kernelius-plugin#readme"
+}
