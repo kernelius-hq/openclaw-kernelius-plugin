@@ -3,6 +3,8 @@ export interface KerneliusConfig {
   apiUrl?: string;
   apiKey?: string;
   webhookSecret?: string;
+  webhookPath?: string;
+  webhookUrl?: string;
   accounts?: Record<string, KerneliusAccountConfig>;
 }
 
@@ -11,6 +13,8 @@ export interface KerneliusAccountConfig {
   apiUrl?: string;
   apiKey?: string;
   webhookSecret?: string;
+  webhookPath?: string;
+  webhookUrl?: string;
 }
 
 export interface KerneliusResolvedAccount {
@@ -19,6 +23,8 @@ export interface KerneliusResolvedAccount {
   apiUrl: string;
   apiKey?: string;
   webhookSecret?: string;
+  webhookPath?: string;
+  webhookUrl?: string;
 }
 
 // Forge webhook payload types

@@ -20,6 +20,14 @@ bun add @kernelius/openclaw-plugin
 
 ## Configuration
 
+This plugin supports two integration modes:
+
+### Option 1: Simple Webhook Mode (Recommended for Getting Started)
+
+Uses OpenClaw's generic `/hooks/agent` endpoint with template mappings. Each webhook creates an isolated agent session.
+
+**Best for:** Quick setup, simple workflows, disposable conversations
+
 Add to your OpenClaw `config.json5`:
 
 ```json5
@@ -29,7 +37,6 @@ Add to your OpenClaw `config.json5`:
       enabled: true,
       apiUrl: "https://forge-api.kernelius.com",  // Optional, defaults to this
       apiKey: "forge_agent_xxx...",               // Get from Forge at /settings/agents
-      webhookSecret: "your-webhook-secret",       // Optional, for signature verification
     }
   },
 
@@ -60,6 +67,42 @@ Add to your OpenClaw `config.json5`:
 }
 ```
 
+Create webhooks pointing to `http://your-openclaw:18789/hooks/forge`.
+
+### Option 2: Gateway Mode with Persistent Sessions (Power Users)
+
+Uses the plugin's gateway adapter for persistent conversations per issue/PR.
+
+**Best for:** Complex workflows, conversation history, stateful interactions
+
+Add to your OpenClaw `config.json5`:
+
+```json5
+{
+  channels: {
+    kernelius: {
+      enabled: true,
+      apiUrl: "https://forge-api.kernelius.com",
+      apiKey: "forge_agent_xxx...",
+      webhookSecret: "your-webhook-secret",       // REQUIRED for gateway mode
+      webhookPath: "/kernelius",                  // Or use webhookUrl for full URL
+    }
+  }
+}
+```
+
+Create webhooks pointing to `http://your-openclaw:18789/kernelius` (or your custom path).
+
+**Key Differences:**
+
+| Feature | Option 1 (Simple) | Option 2 (Gateway) |
+|---------|-------------------|---------------------|
+| Setup complexity | Minimal | Requires webhookSecret |
+| Conversation history | Isolated per webhook | Persistent per issue/PR |
+| Session management | Disposable | Stateful |
+| Configuration | Hooks + templates | Channel config only |
+| Best for | Quick responses | Multi-turn collaboration |
+
 ## Forge Setup
 
 1. **Get an API key:**
@@ -68,13 +111,27 @@ Add to your OpenClaw `config.json5`:
    - Add it to your OpenClaw config as `apiKey`
 
 2. **Create webhooks:**
+
+   **For Option 1 (Simple Mode):**
    ```bash
-   forge webhooks create \\
-     --repo @owner/repo \\
-     --url "http://your-openclaw-server:18789/hooks/forge" \\
-     --events "issue.created,issue.commented,pr.created,pr.review_requested,pr.merged" \\
+   forge webhooks create \
+     --repo @owner/repo \
+     --url "http://your-openclaw-server:18789/hooks/forge" \
+     --events "issue.created,issue.commented,pr.created,pr.review_requested,pr.merged" \
      --name "OpenClaw Integration"
    ```
+
+   **For Option 2 (Gateway Mode):**
+   ```bash
+   forge webhooks create \
+     --repo @owner/repo \
+     --url "http://your-openclaw-server:18789/kernelius" \
+     --events "issue.created,issue.commented,pr.created,pr.review_requested,pr.merged" \
+     --secret "your-webhook-secret" \
+     --name "OpenClaw Gateway"
+   ```
+
+   Note: The webhook secret must match `webhookSecret` in your OpenClaw config.
 
 3. **Test the webhook:**
    ```bash

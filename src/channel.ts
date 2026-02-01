@@ -7,12 +7,16 @@ import {
   DEFAULT_ACCOUNT_ID,
 } from "openclaw/plugin-sdk";
 import { getKerneliusRuntime } from "./runtime.js";
-import type { KerneliusConfig } from "./types.js";
+import type { KerneliusConfig, KerneliusResolvedAccount } from "./types.js";
+import {
+  handleWebhookRequest,
+  resolveKerneliusWebhookPath,
+} from "./inbound.js";
 
 const meta = getChatChannelMeta("kernelius");
 
 // Resolve Kernelius account configuration
-function resolveKerneliusAccount(cfg: any, accountId?: string) {
+function resolveKerneliusAccount(cfg: any, accountId?: string): KerneliusResolvedAccount {
   const effectiveAccountId = accountId || DEFAULT_ACCOUNT_ID;
   const channelConfig = cfg.channels?.kernelius || {};
 
@@ -25,6 +29,8 @@ function resolveKerneliusAccount(cfg: any, accountId?: string) {
     apiUrl: accountConfig.apiUrl || "https://forge-api.kernelius.com",
     apiKey: accountConfig.apiKey,
     webhookSecret: accountConfig.webhookSecret,
+    webhookPath: accountConfig.webhookPath,
+    webhookUrl: accountConfig.webhookUrl,
   };
 }
 
@@ -192,6 +198,58 @@ export const kerneliusPlugin: ChannelPlugin = {
       }
 
       return { success: true };
+    },
+  },
+  gateway: {
+    start: async (ctx) => {
+      const runtime = getKerneliusRuntime();
+      const config = runtime.config.loadConfig();
+      const account = resolveKerneliusAccount(config, ctx.accountId);
+
+      // Only start gateway if webhook path/url is configured
+      if (!account.webhookPath && !account.webhookUrl) {
+        console.log("[kernelius] No webhook path configured, skipping gateway start");
+        return;
+      }
+
+      const webhookPath = resolveKerneliusWebhookPath(
+        account.webhookPath,
+        account.webhookUrl
+      );
+
+      console.log(`[kernelius] Starting gateway for account ${account.accountId} at ${webhookPath}`);
+
+      // Register HTTP handler for webhooks
+      ctx.registerHttpHandler({
+        path: webhookPath,
+        method: "POST",
+        handler: async (req, res) => {
+          try {
+            const inbound = await handleWebhookRequest(req, res, {
+              account,
+              runtime,
+              statusSink: ctx.statusSink,
+            });
+
+            if (inbound) {
+              // Queue message for agent processing
+              await ctx.queueInbound(inbound);
+            }
+          } catch (error) {
+            console.error("[kernelius] Webhook handler error:", error);
+            if (!res.headersSent) {
+              res.writeHead(500, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Internal server error" }));
+            }
+          }
+        },
+      });
+
+      console.log(`[kernelius] Gateway started successfully at ${webhookPath}`);
+    },
+    stop: async (ctx) => {
+      console.log(`[kernelius] Stopping gateway for account ${ctx.accountId}`);
+      // Cleanup is handled by OpenClaw when unregistering handlers
     },
   },
 };
