@@ -41,9 +41,10 @@ export function forgePayloadToInbound(
 ): WebInboundMessage | null {
   const { event, repository, sender, issue, pullRequest, comment } = payload;
 
-  // Determine conversation ID based on event type
+  // Determine conversation ID and messageId based on event type
   let conversationId: string;
   let body: string;
+  let messageId: string | undefined;
   let chatType: "direct" | "group" = "channel";
 
   if (issue) {
@@ -51,32 +52,50 @@ export function forgePayloadToInbound(
 
     if (event === "issue.created") {
       body = `**New Issue #${issue.number}**: ${issue.title}\n\n${issue.body || ""}`;
+      messageId = `issue:${issue.id}`;
     } else if (event === "issue.commented" && comment) {
       body = `**Comment on Issue #${issue.number}** by @${sender.username}:\n\n${comment.body}`;
+      messageId = `issue_comment:${comment.id}`;
     } else if (event === "issue.closed") {
       body = `**Issue #${issue.number} closed** by @${sender.username}`;
+      messageId = `issue:${issue.id}`;
     } else if (event === "issue.reopened") {
       body = `**Issue #${issue.number} reopened** by @${sender.username}`;
+      messageId = `issue:${issue.id}`;
     } else if (event === "issue.updated") {
       body = `**Issue #${issue.number} updated** by @${sender.username}: ${issue.title}`;
+      messageId = `issue:${issue.id}`;
     } else {
       body = `Issue #${issue.number} event: ${event}`;
+      messageId = `issue:${issue.id}`;
     }
   } else if (pullRequest) {
     conversationId = `repo:${repository.fullName}:pr:${pullRequest.number}`;
 
     if (event === "pr.created") {
       body = `**New Pull Request #${pullRequest.number}**: ${pullRequest.title}\n\n${pullRequest.body || ""}`;
+      messageId = `pr:${pullRequest.id}`;
     } else if (event === "pr.review_requested") {
       body = `**Review Requested on PR #${pullRequest.number}**: ${pullRequest.title}\n\nPlease review this pull request.`;
+      messageId = `pr:${pullRequest.id}`;
     } else if (event === "pr.reviewed") {
       body = `**PR #${pullRequest.number} reviewed** by @${sender.username}`;
+      messageId = `pr:${pullRequest.id}`;
     } else if (event === "pr.merged") {
       body = `**PR #${pullRequest.number} merged** by @${sender.username}`;
+      messageId = `pr:${pullRequest.id}`;
     } else if (event === "pr.commented" && comment) {
       body = `**Comment on PR #${pullRequest.number}** by @${sender.username}:\n\n${comment.body}`;
+      messageId = `pr_comment:${comment.id}`;
+    } else if (event === "pr.closed") {
+      body = `**PR #${pullRequest.number} closed** by @${sender.username}`;
+      messageId = `pr:${pullRequest.id}`;
+    } else if (event === "pr.reopened") {
+      body = `**PR #${pullRequest.number} reopened** by @${sender.username}`;
+      messageId = `pr:${pullRequest.id}`;
     } else {
       body = `Pull Request #${pullRequest.number} event: ${event}`;
+      messageId = `pr:${pullRequest.id}`;
     }
   } else {
     // Repository-level event
@@ -100,6 +119,7 @@ export function forgePayloadToInbound(
     senderName: sender.username,
     selfJid: accountId,
     selfE164: null,
+    messageId, // For reactions support
     // Helpers (simplified for webhook-based channel)
     sendComposing: async () => {},
     reply: async (text: string) => {

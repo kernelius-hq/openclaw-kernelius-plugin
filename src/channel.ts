@@ -136,13 +136,56 @@ export const kerneliusPlugin: ChannelPlugin = {
       };
     },
 
-    // React to message (not implemented for Forge yet)
-    react: async () => {
-      throw new Error("Reactions not yet implemented for Kernelius Forge");
+    // React to a comment with an emoji
+    // Valid emojis: +1, -1, laugh, hooray, confused, heart, rocket, eyes
+    react: async (ctx, action) => {
+      const runtime = getKerneliusRuntime();
+      const account = resolveKerneliusAccount(runtime.config.loadConfig(), action.accountId);
+
+      if (!account.apiKey) {
+        throw new Error("Kernelius API key not configured");
+      }
+
+      const { messageId, emoji } = action;
+      if (!messageId || !emoji) {
+        throw new Error("messageId and emoji are required for reactions");
+      }
+
+      // Determine the reaction endpoint based on message type
+      // messageId format: "issue_comment:<id>" or "pr_comment:<id>" or "issue:<id>" or "pr:<id>"
+      let endpoint: string;
+      if (messageId.startsWith("issue_comment:")) {
+        endpoint = `/api/issues/comments/${messageId.replace("issue_comment:", "")}/reactions`;
+      } else if (messageId.startsWith("pr_comment:")) {
+        endpoint = `/api/pulls/comments/${messageId.replace("pr_comment:", "")}/reactions`;
+      } else if (messageId.startsWith("issue:")) {
+        endpoint = `/api/issues/${messageId.replace("issue:", "")}/reactions`;
+      } else if (messageId.startsWith("pr:")) {
+        endpoint = `/api/pulls/${messageId.replace("pr:", "")}/reactions`;
+      } else {
+        throw new Error(`Invalid messageId format: ${messageId}. Expected: issue_comment:<id>, pr_comment:<id>, issue:<id>, or pr:<id>`);
+      }
+
+      const response = await fetch(`${account.apiUrl}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${account.apiKey}`,
+        },
+        body: JSON.stringify({ emoji }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Failed to add reaction: ${response.status} ${error}`);
+      }
+
+      const result = await response.json() as { added: boolean };
+      return { added: result.added };
     },
   },
   actions: {
-    listActions: () => ["send"],
+    listActions: () => ["send", "react"],
     extractToolSend: ({ args }) => {
       const action = typeof args.action === "string" ? args.action.trim() : "";
       if (action !== "sendMessage") {
@@ -156,6 +199,50 @@ export const kerneliusPlugin: ChannelPlugin = {
       return { to, accountId };
     },
     handleAction: async ({ action, params, cfg, accountId }) => {
+      const account = resolveKerneliusAccount(cfg, accountId);
+
+      if (!account.apiKey) {
+        throw new Error("Kernelius API key not configured");
+      }
+
+      if (action === "react") {
+        const messageId = typeof params.messageId === "string" ? params.messageId : undefined;
+        const emoji = typeof params.emoji === "string" ? params.emoji : undefined;
+
+        if (!messageId || !emoji) {
+          throw new Error("Missing required parameters for react: messageId, emoji");
+        }
+
+        // Determine the reaction endpoint based on message type
+        let endpoint: string;
+        if (messageId.startsWith("issue_comment:")) {
+          endpoint = `/api/issues/comments/${messageId.replace("issue_comment:", "")}/reactions`;
+        } else if (messageId.startsWith("pr_comment:")) {
+          endpoint = `/api/pulls/comments/${messageId.replace("pr_comment:", "")}/reactions`;
+        } else if (messageId.startsWith("issue:")) {
+          endpoint = `/api/issues/${messageId.replace("issue:", "")}/reactions`;
+        } else if (messageId.startsWith("pr:")) {
+          endpoint = `/api/pulls/${messageId.replace("pr:", "")}/reactions`;
+        } else {
+          throw new Error(`Invalid messageId format: ${messageId}`);
+        }
+
+        const response = await fetch(`${account.apiUrl}${endpoint}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${account.apiKey}`,
+          },
+          body: JSON.stringify({ emoji }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to add reaction: ${response.status}`);
+        }
+
+        return { success: true };
+      }
+
       if (action !== "send") {
         throw new Error(`Unknown action: ${action}`);
       }
@@ -165,12 +252,6 @@ export const kerneliusPlugin: ChannelPlugin = {
 
       if (!to || !message) {
         throw new Error("Missing required parameters: to, message");
-      }
-
-      const account = resolveKerneliusAccount(cfg, accountId);
-
-      if (!account.apiKey) {
-        throw new Error("Kernelius API key not configured");
       }
 
       // Parse target and send
