@@ -110,7 +110,7 @@ export const kerneliusPlugin: ChannelPlugin = {
       const [, owner, repo, type, number] = match;
       const endpoint = type === "issue"
         ? `/api/repositories/${owner}/${repo}/issues/${number}/comments`
-        : `/api/pulls/${number}/comments`;
+        : `/api/repositories/${owner}/${repo}/pulls/${number}/comments`;
 
       const response = await fetch(`${account.apiUrl}${endpoint}`, {
         method: "POST",
@@ -182,7 +182,7 @@ export const kerneliusPlugin: ChannelPlugin = {
       const [, owner, repo, type, number] = match;
       const endpoint = type === "issue"
         ? `/api/repositories/${owner}/${repo}/issues/${number}/comments`
-        : `/api/pulls/${number}/comments`;
+        : `/api/repositories/${owner}/${repo}/pulls/${number}/comments`;
 
       const response = await fetch(`${account.apiUrl}${endpoint}`, {
         method: "POST",
