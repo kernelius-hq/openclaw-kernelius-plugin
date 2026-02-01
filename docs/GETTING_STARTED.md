@@ -34,6 +34,97 @@ Together, they enable automated workflows like:
                                  └─────────────────┘
 ```
 
+## How the CLI and Plugin Work Together
+
+The **Plugin** and **CLI** serve different but complementary roles:
+
+| Component | Role | When to Use |
+|-----------|------|-------------|
+| **Plugin** | Communication layer | Receiving events, sending comments/reactions |
+| **CLI** | Action layer | Reading data, performing operations (clone, diff, merge, etc.) |
+
+### The Plugin (Communication)
+
+The plugin handles **event-driven messaging**:
+- **Inbound**: Receives webhooks when something happens in Forge (new issue, PR created, comment added)
+- **Outbound**: Sends comments and reactions back to issues/PRs
+
+Think of it as the agent's "ears and mouth" for Forge.
+
+### The CLI (Actions)
+
+The CLI handles **read/write operations**:
+- **Read**: Get repo info, view diffs, list commits, fetch issue details
+- **Write**: Clone repos, create issues, merge PRs, submit reviews
+
+Think of it as the agent's "hands" for Forge.
+
+### Example: AI Code Review Workflow
+
+Here's how both components work together for a PR review:
+
+```
+1. WEBHOOK ARRIVES (Plugin)
+   ┌────────────────────────────────────────────────────┐
+   │ Forge sends: "Review requested on PR #5"          │
+   │ Plugin converts to OpenClaw message               │
+   │ Agent receives: "Please review PR #5 in @org/repo"│
+   └────────────────────────────────────────────────────┘
+                           │
+                           ▼
+2. AGENT GATHERS CONTEXT (CLI)
+   ┌────────────────────────────────────────────────────┐
+   │ Agent runs: forge prs view --repo @org/repo -n 5  │
+   │ Agent runs: forge prs diff --repo @org/repo -n 5  │
+   │ Agent runs: forge prs commits --repo @org/repo -n 5│
+   │ → Gets PR details, code changes, commit history   │
+   └────────────────────────────────────────────────────┘
+                           │
+                           ▼
+3. AGENT ANALYZES
+   ┌────────────────────────────────────────────────────┐
+   │ Agent reviews the diff, checks for issues         │
+   │ Identifies: missing error handling, typo, etc.    │
+   └────────────────────────────────────────────────────┘
+                           │
+                           ▼
+4. AGENT RESPONDS (Plugin OR CLI)
+   ┌────────────────────────────────────────────────────┐
+   │ Option A - Via Plugin (simple comment):           │
+   │   Plugin sends comment to PR #5                   │
+   │                                                    │
+   │ Option B - Via CLI (formal review):               │
+   │   forge prs review --repo @org/repo -n 5 \        │
+   │     --state request_changes --body "Please fix X" │
+   └────────────────────────────────────────────────────┘
+```
+
+### When to Use Which
+
+| Task | Use Plugin | Use CLI |
+|------|:----------:|:-------:|
+| Receive webhook events | ✅ | |
+| Send simple comment | ✅ | ✅ |
+| Add reaction (emoji) | ✅ | |
+| View PR diff | | ✅ |
+| List commits | | ✅ |
+| Clone repository | | ✅ |
+| Create issue | | ✅ |
+| Merge PR | | ✅ |
+| Submit formal review | | ✅ |
+| Get repo/issue/PR details | | ✅ |
+
+### Key Insight
+
+**Plugin = Real-time events + Quick responses**
+**CLI = Rich operations + Detailed data**
+
+Most agent workflows use both:
+1. Plugin triggers the agent (webhook)
+2. CLI gathers context (read operations)
+3. Agent processes and decides
+4. Plugin or CLI sends the response
+
 ## Components
 
 | Component | npm Package | Purpose |

@@ -9,6 +9,23 @@ This plugin enables OpenClaw agents to:
 - Comment on issues and pull requests
 - Collaborate with humans and other agents on code
 
+## Plugin vs CLI
+
+This plugin works alongside the [Forge CLI](https://www.npmjs.com/package/@kernelius/forge-cli):
+
+| Component | Role | Examples |
+|-----------|------|----------|
+| **Plugin** | Communication | Receive webhooks, send comments, add reactions |
+| **CLI** | Actions | View diffs, clone repos, merge PRs, submit reviews |
+
+**Typical workflow:**
+1. Plugin receives webhook → "PR #5 needs review"
+2. Agent uses CLI → `forge prs diff --repo @org/repo -n 5`
+3. Agent analyzes the code
+4. Agent responds via plugin (comment) or CLI (formal review)
+
+See the [Getting Started Guide](./docs/GETTING_STARTED.md) for detailed examples.
+
 ## Installation
 
 ```bash
