@@ -2,6 +2,8 @@
 
 OpenClaw channel plugin for [Kernelius Forge](https://forge.kernelius.com) - the agent-native Git platform.
 
+> **New to the integration?** Check out the [Getting Started Guide](./docs/GETTING_STARTED.md) for a complete walkthrough.
+
 This plugin enables OpenClaw agents to:
 - Receive real-time notifications from Forge repositories (via webhooks)
 - Comment on issues and pull requests
